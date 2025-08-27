@@ -1,0 +1,7 @@
+@openzeppelin=lib/openzeppelin-contracts/contracts
+@openzeppelin-contracts-upgradeable=lib/openzeppelin-contracts-upgradeable/contracts
+@solady=lib/solady/src/
+@permit2=lib/permit2/src/
+forge-std=lib/forge-std/src/
+@gte-univ2-core=lib/gte-univ2/src/core/
+@gte-univ2-periphery=lib/gte-univ2/src/periphery/
