@@ -1,42 +1,15 @@
-# ✨ So you want to run an audit
-
-This `README.md` contains a set of checklists for our audit collaboration. This is your audit repo, which is used for scoping your audit and for providing information to wardens
-
-Some of the checklists in this doc are for our scouts and some of them are for **you as the audit sponsor (⭐️)**.
-
----
-
-# Repo setup
-
-## ⭐️ Sponsor: Add code to this repo
-
-- [ ] Create a PR to this repo with the below changes:
-- [ ] Confirm that this repo is a self-contained repository with working commands that will build (at least) all in-scope contracts, and commands that will run tests producing gas reports for the relevant contracts.
-- [ ] Please have final versions of contracts and documentation added/updated in this repo **no less than 48 business hours prior to audit start time.**
-- [ ] Be prepared for a 🚨code freeze🚨 for the duration of the audit — important because it establishes a level playing field. We want to ensure everyone's looking at the same code, no matter when they look during the audit. (Note: this includes your own repo, since a PR can leak alpha to our wardens!)
-
-## ⭐️ Sponsor: Repo checklist
-
-- [ ] Modify the [Overview](#overview) section of this `README.md` file. Describe how your code is supposed to work with links to any relevant documentation and any other criteria/details that the auditors should keep in mind when reviewing. (Here are two well-constructed examples: [Ajna Protocol](https://github.com/code-423n4/2023-05-ajna) and [Maia DAO Ecosystem](https://github.com/code-423n4/2023-05-maia))
-- [ ] Optional: pre-record a high-level overview of your protocol (not just specific smart contract functions). This saves wardens a lot of time wading through documentation.
-- [ ] Review and confirm the details created by the Scout (technical reviewer) who was assigned to your contest. *Note: any files not listed as "in scope" will be considered out of scope for the purposes of judging, even if the file will be part of the deployed contracts.*  
-
----
-
-# Sponsorname audit details
-- Total Prize Pool: XXX XXX USDC (Notion: Total award pool)
-  - HM awards: up to XXX XXX USDC (Notion: HM (main) pool)
+# GTE Perps and Launchpad audit details
+- Total Prize Pool: $103,250 in USDC 
+  - HM awards: up to $96,000 in USDC
     - If no valid Highs or Mediums are found, the HM pool is $0 
-  - QA awards: XXX XXX USDC (Notion: QA pool)
-  - Judge awards: XXX XXX USDC (Notion: Judge Fee)
-  - Scout awards: $500 USDC (Notion: Scout fee - but usually $500 USDC)
-  - (this line can be removed if there is no mitigation) Mitigation Review: XXX XXX USDC
+  - QA awards: $4,000 in USDC
+  - Judge awards: $3,000 in USDC
+  - Scout awards: $250 in USDC
 - [Read our guidelines for more details](https://docs.code4rena.com/competitions)
-- Starts XXX XXX XX 20:00 UTC (ex. `Starts March 22, 2023 20:00 UTC`)
-- Ends XXX XXX XX 20:00 UTC (ex. `Ends March 30, 2023 20:00 UTC`)
+- Starts August 28, 2025 20:00 UTC 
+- Ends September 25, 2025 20:00 UTC
 
 **❗ Important notes for wardens** 
-## 🐺 C4 staff: delete the PoC requirement section if not applicable - i.e. for non-Solidity/EVM audits.
 1. A coded, runnable PoC is required for all High/Medium submissions to this audit. 
   - This repo includes a basic template to run the test suite.
   - PoCs must use the test suite provided in this repo.
@@ -49,14 +22,29 @@ Some of the checklists in this doc are for our scouts and some of them are for *
 
 ## Automated Findings / Publicly Known Issues
 
-The 4naly3er report can be found [here](https://github.com/code-423n4/YYYY-MM-contest-candidate/blob/main/4naly3er-report.md).
+The 4naly3er report can be found [here](https://github.com/code-423n4/2025-08-gte-perps/blob/main/4naly3er-report.md).
 
 _Note for C4 wardens: Anything included in this `Automated Findings / Publicly Known Issues` section is considered a publicly known issue and is ineligible for awards._
-## 🐺 C4: Begin Gist paste here (and delete this line)
 
+- Vulnerabilities stemming from manipulating the Index Price (which would come from Oracles and other external off-chain sources) directly (tampering with the Oracle) or indirectly (market manipulation of the underlying asset) will not be considered valid findings for this audit; for all intents and purposes, the Index Price is considered valid.
+However, mark price manipulation, as it is a platform-specific construct, are in scope.
+Price _history_ manipulation (e.g. tampering historical prices that are already in the platform's storage, Index, Mark or otherwise) are in scope, too.
 
+✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
 
+# Overview
 
+[ ⭐️ SPONSORS: add info here ]
+
+## Links
+
+- **Previous audits:**  
+  - ✅ SCOUTS: If there are multiple report links, please format them in a list.
+- **Documentation:** https://docs.gte.xyz/home/
+- **Website:** https://www.gte.xyz
+- **X/Twitter:** https://x.com/GTE_XYZ
+  
+---
 
 # Scope
 
@@ -245,3 +233,80 @@ _Note for C4 wardens: Anything included in this `Automated Findings / Publicly K
 | ./test/utils/OperatorPanel.t.sol |
 | Totals: 134 |
 
+
+# Additional context
+
+## Areas of concern (where to focus for bugs)
+- Economical attacks (e.g. engaging large amounts of tokens to break the platform or profit from it) are considered a valid attack vector; we encourage Wardens to look out for ways to generate "bad debt", e.g. negative equity, in a way that would result in net-positive gains for the attacker, or make the platform illiquid. ADL (Auto-De-Leverage) abuses that result in monetary gains for the attacker, are of particular interest to us.
+
+- The Orderbook should be able to process orders at all times; we invite the wardens to look for attacks that would result in a Denial Of Service (e.g. placing an order that cannot be cleared by the ClearingHouse), or that bypasses the limit of orders an User can place in one transaction.
+
+- Any attack that would result in loss of funds for other users, themselves or the Platform's funds, making it illiquid, are of particular interest to us.
+
+✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+
+## Main invariants
+
+We define the PerpManager's USDC balance as:
+```
+sum(all_users_free_collateral_balances[]) + sum(all_users_margin_balances[]) + insurance_Fund_Balance()
+```
+
+This should always be equal to the PerpManager's USDC Token balance.
+
+✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+
+## All trusted roles in the protocol
+
+- `ADMIN_ROLE`, `LIQUIDATOR_ROLE` and `KEEPER_ROLE`  (in use mainly in the AdminPanel contract) is considered trusted.
+- Users that give another user an `OPERATOR` role of any kind, consider that user trusted, too.
+
+✅ SCOUTS: Please format the response above 👆 using the template below👇
+
+| Role                                | Description                       |
+| --------------------------------------- | ---------------------------- |
+| Owner                          | Has superpowers                |
+| Administrator                             | Can change fees                       |
+
+✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+
+## Running tests
+
+pre-requisite: the latest version of `foundry` is required to run this project.
+https://getfoundry.sh/introduction/installation
+
+Once that is done,
+
+```
+$ git clone git@github.com:[Code4rena-repository].git
+
+$ cd gte-contracts
+
+$ forge install
+
+$ forge build
+```
+
+✅ SCOUTS: Please format the response above 👆 using the template below👇
+
+```bash
+git clone https://github.com/code-423n4/2023-08-arbitrum
+git submodule update --init --recursive
+cd governance
+foundryup
+make install
+make build
+make sc-election-test
+```
+To run code coverage
+```bash
+make coverage
+```
+
+✅ SCOUTS: Add a screenshot of your terminal showing the test coverage
+
+## Miscellaneous
+
+Employees of GTE and employees' family members are ineligible to participate in this audit.
+
+Code4rena's rules cannot be overridden by the contents of this README. In case of doubt, please check with C4 staff.
