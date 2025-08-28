@@ -11,7 +11,7 @@
 
 **❗ Important notes for wardens** 
 1. A coded, runnable PoC is required for all High/Medium submissions to this audit. 
-  - This repo includes a basic template to run the test suite.
+  - This repo will include a basic template to run the test suite **within the next 24-48 hours**.
   - PoCs must use the test suite provided in this repo.
   - Your submission will be marked as Insufficient if the POC is not runnable and working with the provided test suite.
   - Exception: PoC is optional (though recommended) for wardens with signal ≥ 0.68.
@@ -22,24 +22,64 @@
 
 ## Automated Findings / Publicly Known Issues
 
-The 4naly3er report can be found [here](https://github.com/code-423n4/2025-08-gte-perps/blob/main/4naly3er-report.md).
+The 4naly3er report has not been generated for this contest due to the system's SotA compiler combined wtih a complex library and type structure.
 
 _Note for C4 wardens: Anything included in this `Automated Findings / Publicly Known Issues` section is considered a publicly known issue and is ineligible for awards._
 
-- Vulnerabilities stemming from manipulating the Index Price (which would come from Oracles and other external off-chain sources) directly (tampering with the Oracle) or indirectly (market manipulation of the underlying asset) will not be considered valid findings for this audit; for all intents and purposes, the Index Price is considered valid.
-However, mark price manipulation, as it is a platform-specific construct, are in scope.
-Price _history_ manipulation (e.g. tampering historical prices that are already in the platform's storage, Index, Mark or otherwise) are in scope, too.
+### Index Price Manipulation
 
-✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+Any vulnerabilities stemming from manipulation of the Index Price that is yielded by Oracles and other off-chain resources will not be considered valid for the purposes of the contest; for all intents and purposes, the Index Price is considered valid and secure. 
+
+Tampering of these resources as well as organic market manipulation of the Index Price are also considered out-of-scope. However, price *history* manipulation of the Index Price (or any other price type within the system) is in-scope.
+
+Additionally, manipulation of the platform-specific construct called the Mark Price is in-scope as well.
+
+### Previously Identified Issues
+
+Any submissions that have been identified in the Zellic audits are considered out-of-scope for the purposes of this contest. Additionally, any submissions applicable to the perpetual CLOB system that were identified in the Code4rena CLOB contest are also considered out-of-scope. 
+
+A notable example of such findings would be [S-461](https://code4rena.com/audits/2025-07-gte-spot-clob-and-router/submissions/S-461) and the absence of a minimum expiry enforcement / minimum wait cancellation window.
 
 # Overview
 
-[ ⭐️ SPONSORS: add info here ]
+## Launchpad
+
+Permissionless token launcher and project token launchpad.
+
+### Permissionless Token Launcher
+
+The GTE token launcher is a permissionless system that allows anyone to boostrap liquidity to launch a token on GTE. Launches are fair, meaning that no tokens will be available for purchase by the team beforehand. The flow of launching a new long-tail asset is as follows:
+
+- 80% of the token supply will be traded on a bonding curve, and when a token hits the bonding price, a liquidity pool will automatically be deployed on the GTE AMM seeded with 20% of the supply reserved from the bonding curve.
+- After a launched token bonds and gets its own liquidity pool, the token will be immediately tradeable in the DEX aggregator frontend.
+- After a token reaches sufficient maturity and market depth, it will be automatically added to the GTE CLOB platform.
+
+### Project Token Launchpad
+
+The GTE Token Launchpad addresses the growing skepticism around CEX listings, which are often expensive and lack transparency in price discovery. Unlike CEXs, GTE partners with projects on MegaETH to launch tokens onchain through our token launchpad and across our trading venues.
+
+The launchpad facilitates the creation of fully onchain token vaults, enabling token sales to the GTE community. Upon a sale, tokens are locked in a stake vault. Users who hold their staked tokens for longer periods receive more tokens at the time of vault unlock. Additionally, GTE receives a portion of the initial supply dedicated to the launchpad.
+
+This process is conducted in a fully compliant manner, with partnerships in place to provide necessary KYC, ensuring protection for both GTE and its users.
+
+## Perps CLOB
+
+GTE onchain Central-Limit Order Book
+
+### What is a CLOB?
+
+The order book is an exchange design that resembles traditional finance. For any given asset pair, an order book maintains a bid and ask side – each one being a list of buy and sell orders, respectively. Each order is placed at a different price level, called a limit, and has an order size, which represents the amount of the trade asset that the order wants to buy or sell. Order books use an algorithmic matching engine to match up buy and sell orders, settling the funds of orders that fulfill each other. Most order books use “price-time priority” for their matching engines, meaning that the highest buy offers and lowest sell offers are settled first, followed by the chronological sequence of orders placed at that limit price.
+
+### Perps
+GTE leverages its high-performance infrastructure to offer Central Limit Order Books for both major market types, with perpetual futures being the focus of this contest:
+
+- Perpetual Futures CLOB: For trading derivatives contracts that mimic spot prices without an expiry date, allowing for leverage and hedging strategies.
 
 ## Links
 
 - **Previous audits:**  
-  - ✅ SCOUTS: If there are multiple report links, please format them in a list.
+  - Launchpad: https://github.com/Zellic/publications/blob/master/GTE%20Launchpad-%20Zellic%20Audit%20Report.pdf
+  - CLOB Perps: https://github.com/Zellic/publications/blob/master/GTE%20Launchpad-%20Zellic%20Audit%20Report.pdf
 - **Documentation:** https://docs.gte.xyz/home/
 - **Website:** https://www.gte.xyz
 - **X/Twitter:** https://x.com/GTE_XYZ
@@ -48,262 +88,182 @@ Price _history_ manipulation (e.g. tampering historical prices that are already 
 
 # Scope
 
-*See [scope.txt](https://github.com/code-423n4/2025-08-gte-perps/blob/main/scope.txt)*
-
 ### Files in scope
 
+_Note: The nSLoC counts in the following table have been automatically generated and may differ depending on the definition of what a "significant" line of code represents. As such, they should be considered indicative rather than absolute representations of the lines involved in each contract._
 
-| File   | Logic Contracts | Interfaces | nSLOC | Purpose | Libraries used |
-| ------ | --------------- | ---------- | ----- | -----   | ------------ |
-| /contracts/perps/GTL.sol | 1| **** | 199 | |@solady/tokens/ERC4626.sol<br>@solady/utils/EnumerableSetLib.sol<br>@solady/utils/DynamicArrayLib.sol<br>@solady/utils/SafeTransferLib.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/Initializable.sol<br>@solady/auth/OwnableRoles.sol<br>@solady/utils/FixedPointMathLib.sol|
-| /contracts/perps/PerpManager.sol | 1| **** | 226 | |@solady/utils/FixedPointMathLib.sol<br>@solady/utils/DynamicArrayLib.sol<br>@solady/utils/SafeCastLib.sol|
-| /contracts/perps/modules/AdminPanel.sol | 1| **** | 467 | |@solady/auth/OwnableRoles.sol<br>@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/Initializable.sol<br>@solady/utils/SignatureCheckerLib.sol|
-| /contracts/perps/modules/LiquidatorPanel.sol | 1| **** | 536 | |@solady/auth/OwnableRoles.sol<br>@solady/utils/FixedPointMathLib.sol<br>@solady/utils/DynamicArrayLib.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/EnumerableSetLib.sol<br>@solady/utils/Initializable.sol<br>@solady/utils/SignatureCheckerLib.sol|
-| /contracts/perps/modules/ViewPort.sol | 1| **** | 233 | |@solady/auth/OwnableRoles.sol<br>@solady/utils/EnumerableSetLib.sol<br>@solady/utils/DynamicArrayLib.sol<br>@solady/utils/SafeCastLib.sol|
-| /contracts/perps/types/BackstopLiquidatorDataLib.sol | 1| **** | 62 | ||
-| /contracts/perps/types/Book.sol | 1| **** | 339 | |@solady/utils/FixedPointMathLib.sol|
-| /contracts/perps/types/CLOBLib.sol | 1| **** | 420 | |@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/DynamicArrayLib.sol|
-| /contracts/perps/types/ClearingHouse.sol | 1| **** | 431 | |@solady/utils/EnumerableSetLib.sol<br>@solady/utils/DynamicArrayLib.sol<br>@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeCastLib.sol|
-| /contracts/perps/types/CollateralManager.sol | 1| **** | 72 | |@solady/utils/SafeTransferLib.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/FixedPointMathLib.sol|
-| /contracts/perps/types/Constants.sol | 1| **** | 9 | ||
-| /contracts/perps/types/Enums.sol | ****| **** | 35 | ||
-| /contracts/perps/types/FeeManager.sol | 1| **** | 49 | |@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeTransferLib.sol|
-| /contracts/perps/types/FundingRateEngine.sol | 1| **** | 80 | |solady/utils/FixedPointMathLib.sol<br>solady/utils/SafeCastLib.sol|
-| /contracts/perps/types/InsuranceFund.sol | 1| **** | 37 | |@solady/utils/SafeTransferLib.sol|
-| /contracts/perps/types/Market.sol | 1| **** | 398 | |@solady/utils/DynamicArrayLib.sol<br>@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeCastLib.sol|
-| /contracts/perps/types/Order.sol | 2| **** | 69 | ||
-| /contracts/perps/types/PackedFeeRatesLib.sol | 1| **** | 20 | ||
-| /contracts/perps/types/Position.sol | 1| **** | 87 | |@solady/utils/FixedPointMathLib.sol<br>@solady/utils/SafeCastLib.sol|
-| /contracts/perps/types/PriceHistory.sol | 1| **** | 66 | |@solady/utils/FixedPointMathLib.sol|
-| /contracts/perps/types/StorageLib.sol | 1| **** | 121 | ||
-| /contracts/perps/types/Structs.sol | ****| **** | 155 | ||
-| /contracts/launchpad/BondingCurve.sol | 1| **** | 3 | ||
-| /contracts/launchpad/BondingCurves/IBondingCurveMinimal.sol | ****| 1 | 4 | |@openzeppelin/interfaces/IERC165.sol|
-| /contracts/launchpad/BondingCurves/SimpleBondingCurve.sol | 1| **** | 120 | |@openzeppelin/interfaces/IERC165.sol<br>@solady/auth/Ownable.sol|
-| /contracts/launchpad/Distributor.sol | 1| **** | 123 | |@solady/auth/OwnableRoles.sol<br>@solady/utils/SafeCastLib.sol<br>@solady/utils/SafeTransferLib.sol|
-| /contracts/launchpad/LaunchToken.sol | 1| **** | 90 | |@solady/tokens/ERC20.sol|
-| /contracts/launchpad/Launchpad.sol | 1| **** | 356 | |@solady/utils/SafeTransferLib.sol<br>@openzeppelin/utils/introspection/ERC165Checker.sol<br>@solady/utils/Initializable.sol<br>@solady/auth/Ownable.sol<br>@solady/utils/ReentrancyGuard.sol<br>contracts/clob/ICLOBManager.sol<br>contracts/utils/OperatorPanel.sol<br>contracts/utils/types/OperatorHelperLib.sol<br>contracts/utils/interfaces/IOperatorPanel.sol<br>contracts/utils/types/EventNonce.sol|
-| /contracts/launchpad/LaunchpadLPVault.sol | 1| **** | 17 | |@openzeppelin-contracts-upgradeable/access/Ownable2StepUpgradeable.sol|
-| /contracts/launchpad/libraries/RewardsTracker.sol | 2| **** | 147 | ||
-| /contracts/launchpad/uniswap/GTELaunchpadV2Pair.sol | 1| **** | 236 | |@gte-univ2-core/interfaces/IUniswapV2Pair.sol<br>@gte-univ2-core/UniswapV2ERC20.sol<br>@gte-univ2-core/libraries/Math.sol<br>@gte-univ2-core/libraries/UQ112x112.sol<br>@gte-univ2-core/interfaces/IERC20.sol<br>@gte-univ2-core/interfaces/IUniswapV2Factory.sol<br>@gte-univ2-core/interfaces/IUniswapV2Callee.sol|
-| /contracts/launchpad/uniswap/GTELaunchpadV2PairFactory.sol | 1| **** | 47 | |@gte-univ2-core/interfaces/IUniswapV2Factory.sol|
-| /contracts/launchpad/uniswap/interfaces/IGTELaunchpadV2Pair.sol | ****| 1 | 3 | ||
-| /contracts/launchpad/uniswap/interfaces/IUniswapV2Router01.sol | ****| 1 | 3 | ||
-| **Totals** | **31** | **3** | **5260** | | |
+| File   | nSLOC | 
+| ------ | ----- | 
+| [contracts/perps/GTL.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/GTL.sol) | 199 | 
+| [contracts/perps/PerpManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/PerpManager.sol) |  226 | 
+| [contracts/perps/modules/AdminPanel.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/AdminPanel.sol) |  467 | 
+| [contracts/perps/modules/LiquidatorPanel.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/LiquidatorPanel.sol) | 536 | 
+| [contracts/perps/modules/ViewPort.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/ViewPort.sol) | 233 | 
+| [contracts/perps/types/BackstopLiquidatorDataLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/BackstopLiquidatorDataLib.sol) | 62 |
+| [contracts/perps/types/Book.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Book.sol) | 339 |
+| [contracts/perps/types/CLOBLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/CLOBLib.sol) | 420 | 
+| [contracts/perps/types/ClearingHouse.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/ClearingHouse.sol) | 431 | 
+| [contracts/perps/types/CollateralManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/CollateralManager.sol) | 72 | 
+| [contracts/perps/types/Constants.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Constants.sol) | 9 | 
+| [contracts/perps/types/Enums.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Enums.sol) |  35 |
+| [contracts/perps/types/FeeManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/FeeManager.sol) | 49 | 
+| [contracts/perps/types/FundingRateEngine.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/FundingRateEngine.sol) | 80 | 
+| [contracts/perps/types/InsuranceFund.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/InsuranceFund.sol) | 37 |
+| [contracts/perps/types/Market.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Market.sol) | 398 | 
+| [contracts/perps/types/Order.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Order.sol) | 69 |
+| [contracts/perps/types/PackedFeeRatesLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/PackedFeeRatesLib.sol) | 20 |
+| [contracts/perps/types/Position.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Position.sol) | 87 | 
+| [contracts/perps/types/PriceHistory.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/PriceHistory.sol) | 66 |
+| [contracts/perps/types/StorageLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/StorageLib.sol) | 121 |
+| [contracts/perps/types/Structs.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Structs.sol) | 155 |
+| [contracts/launchpad/BondingCurve.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/BondingCurve.sol) | 3 |
+| [contracts/launchpad/BondingCurves/IBondingCurveMinimal.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/BondingCurves/IBondingCurveMinimal.sol) |  4 | 
+| [contracts/launchpad/BondingCurves/SimpleBondingCurve.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/BondingCurves/SimpleBondingCurve.sol) | 120 | 
+| [contracts/launchpad/Distributor.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/Distributor.sol) | 123 | 
+| [contracts/launchpad/LaunchToken.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/LaunchToken.sol) | 90 | 
+| [contracts/launchpad/Launchpad.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/Launchpad.sol) | 356 | 
+| [contracts/launchpad/LaunchpadLPVault.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/LaunchpadLPVault.sol) |17 |
+| [contracts/launchpad/libraries/RewardsTracker.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/libraries/RewardsTracker.sol) | 147 |
+| [contracts/launchpad/uniswap/GTELaunchpadV2Pair.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/GTELaunchpadV2Pair.sol) | 236 | 
+| [contracts/launchpad/uniswap/GTELaunchpadV2PairFactory.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/GTELaunchpadV2PairFactory.sol) | 47 |
+| [contracts/launchpad/uniswap/interfaces/IGTELaunchpadV2Pair.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/interfaces/IGTELaunchpadV2Pair.sol) |  3 | 
+| [contracts/launchpad/uniswap/interfaces/IUniswapV2Router01.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/interfaces/IUniswapV2Router01.sol) |  3 | 
+| **Totals** | **5260** |
+
+*For a machine-readable version, please consult the [scope.txt](https://github.com/code-423n4/2025-08-gte-perps/blob/main/scope.txt) file*
 
 ### Files out of scope
 
-*See [out_of_scope.txt](https://github.com/code-423n4/2025-08-gte-perps/blob/main/out_of_scope.txt)*
-
-| File         |
+| Filepaths         |
 | ------------ |
-| ./contracts/account-manager/AccountManager.sol |
-| ./contracts/account-manager/IAccountManager.sol |
-| ./contracts/clob/CLOB.sol |
-| ./contracts/clob/CLOBManager.sol |
-| ./contracts/clob/ICLOB.sol |
-| ./contracts/clob/ICLOBManager.sol |
-| ./contracts/clob/ILimitLens.sol |
-| ./contracts/clob/types/Book.sol |
-| ./contracts/clob/types/FeeData.sol |
-| ./contracts/clob/types/Order.sol |
-| ./contracts/clob/types/RedBlackTree.sol |
-| ./contracts/clob/types/Roles.sol |
-| ./contracts/clob/types/TransientMakerData.sol |
-| ./contracts/launchpad/interfaces/IDistributor.sol |
-| ./contracts/launchpad/interfaces/ILaunchpad.sol |
-| ./contracts/launchpad/interfaces/IUniV2Factory.sol |
-| ./contracts/launchpad/interfaces/IUniswapV2FactoryMinimal.sol |
-| ./contracts/launchpad/interfaces/IUniswapV2Pair.sol |
-| ./contracts/launchpad/interfaces/IUniswapV2RouterMinimal.sol |
-| ./contracts/perps/interfaces/IGTL.sol |
-| ./contracts/perps/interfaces/IPerpManager.sol |
-| ./contracts/perps/interfaces/IViewPort.sol |
-| ./contracts/router/GTERouter.sol |
-| ./contracts/router/interfaces/IUniswapV2Router01.sol |
-| ./contracts/utils/OperatorHub.sol |
-| ./contracts/utils/OperatorPanel.sol |
-| ./contracts/utils/interfaces/IOperatorHub.sol |
-| ./contracts/utils/interfaces/IOperatorPanel.sol |
-| ./contracts/utils/types/EventNonce.sol |
-| ./contracts/utils/types/OperatorHelperLib.sol |
-| ./script/ScriptProtector.s.sol |
-| ./script/helpers/MockUSDC.s.sol |
-| ./script/launchpad/Launchpad.s.sol |
-| ./script/misc/CreatePerpMarket.s.sol |
-| ./script/misc/DeployUniV2Pair.s.sol |
-| ./script/perps/DeployPerpManager.s.sol |
-| ./script/router_launchpad/RouterLaunchpad.s.sol |
-| ./script/router_launchpad/RouterSimpleLaunchpad.s.sol |
-| ./script/spot-clob/CLOBManager.s.sol |
-| ./script/upgrades/UpgradeAccountManager.s.sol |
-| ./script/upgrades/UpgradeBondingCurve.s.sol |
-| ./script/upgrades/UpgradeCLOB.s.sol |
-| ./script/upgrades/UpgradeCLOBManager.s.sol |
-| ./script/upgrades/UpgradeGTL.s.sol |
-| ./script/upgrades/UpgradeLaunchpad.s.sol |
-| ./script/upgrades/UpgradeLaunchpadLPVault.s.sol |
-| ./script/upgrades/UpgradePerpManager.s.sol |
-| ./script/upgrades/UpgradeRouter.s.sol |
-| ./test/c4-poc/PoC.t.sol |
-| ./test/c4-poc/PoCTestBase.t.sol |
-| ./test/clob/fuzz/auth/Auth.t.sol |
-| ./test/clob/fuzz/clob/CLOBViews.t.sol |
-| ./test/clob/fuzz/red-black-tree/RedBlackTree.t.sol |
-| ./test/clob/mock/CLOBAnvilFuzzTrader.sol |
-| ./test/clob/unit/clob/CLOBAmendIncrease.t.sol |
-| ./test/clob/unit/clob/CLOBAmendNewPrice.t.sol |
-| ./test/clob/unit/clob/CLOBAmendReduce.t.sol |
-| ./test/clob/unit/clob/CLOBAmmendNewSide.t.sol |
-| ./test/clob/unit/clob/CLOBCancel.t.sol |
-| ./test/clob/unit/clob/CLOBFill.t.sol |
-| ./test/clob/unit/clob/CLOBPost.t.sol |
-| ./test/clob/unit/clob/CLOBViews.sol |
-| ./test/clob/unit/red-black-tree/RedBlackTree.t.sol |
-| ./test/clob/unit/types/TransientMakerData.t.sol |
-| ./test/clob/utils/CLOBTestBase.sol |
-| ./test/cross-platform/PerpSpotTransfers.t.sol |
-| ./test/harnesses/ERC20Harness.sol |
-| ./test/launchpad/Distributor.t.sol |
-| ./test/launchpad/LaunchToken.t.sol |
-| ./test/launchpad/Launchpad.t.sol |
-| ./test/launchpad/RewardsTracker.t.sol |
-| ./test/launchpad/SimpleBondingCurve.t.sol |
-| ./test/launchpad/integration/UniV2Bytecode.t.sol |
-| ./test/launchpad/uniswap/LaunchpadFeePair.t.sol |
-| ./test/live-tests/DeployUniV2Pair.t.sol |
-| ./test/live-tests/PerpSimulation.t.sol |
-| ./test/live-tests/PostGraduateSwap.t.sol |
-| ./test/live-tests/Simulation.t.sol |
-| ./test/live-tests/SpotSimulation.t.sol |
-| ./test/live-tests/UpgradeBondingCurve.t.sol |
-| ./test/live-tests/UpgradeLaunchpad.t.sol |
-| ./test/mocks/MockDistributor.sol |
-| ./test/mocks/MockLaunchpad.sol |
-| ./test/mocks/MockRewardsTracker.sol |
-| ./test/mocks/MockTree.sol |
-| ./test/mocks/MockUniV2Router.sol |
-| ./test/mocks/TransientMakerDataHarness.sol |
-| ./test/perps/PerpManagerTestBase.sol |
-| ./test/perps/e2e/GTL.t.sol |
-| ./test/perps/e2e/PerpAmendLimitOrder.t.sol |
-| ./test/perps/e2e/PerpBackstopLiquidation.t.sol |
-| ./test/perps/e2e/PerpDeleverage.t.sol |
-| ./test/perps/e2e/PerpDelistClose.t.sol |
-| ./test/perps/e2e/PerpLeverageUpdate.t.sol |
-| ./test/perps/e2e/PerpMarginUpdate.t.sol |
-| ./test/perps/e2e/PerpPostFillOrder_Close.t.sol |
-| ./test/perps/e2e/PerpPostFillOrder_Decrease.t.sol |
-| ./test/perps/e2e/PerpPostFillOrder_Increase.t.sol |
-| ./test/perps/e2e/PerpPostFillOrder_Open.t.sol |
-| ./test/perps/e2e/PerpPostFillOrder_ReverseOpen.t.sol |
-| ./test/perps/e2e/PerpPostLimitOrder.t.sol |
-| ./test/perps/e2e/PerpQuoter.t.sol |
-| ./test/perps/e2e/PerpStandardLiquidation.t.sol |
-| ./test/perps/fail/PerpAmendLimitOrderFail.t.sol |
-| ./test/perps/fail/PerpPostLimitOrderFail.t.sol |
-| ./test/perps/fail/PerpReduceOnlyCapFail.t.sol |
-| ./test/perps/integration/AdminPanel.t.sol |
-| ./test/perps/integration/AdminPanelConditionalOrders.t.sol |
-| ./test/perps/integration/GTLSubaccountHook.t.sol |
-| ./test/perps/integration/PerpCrossMargin.t.sol |
-| ./test/perps/integration/PerpDivergenceCap.t.sol |
-| ./test/perps/integration/PerpMiscGetters.t.sol |
-| ./test/perps/integration/PerpOrderbookNotional.t.sol |
-| ./test/perps/integration/PerpPlaceOrderMisc.t.sol |
-| ./test/perps/integration/PerpProtatedMargin.t.sol |
-| ./test/perps/integration/PerpRebalance.t.sol |
-| ./test/perps/mock/BackstopLiquidatorDataHarness.sol |
-| ./test/perps/mock/MockAdminPanel.t.sol |
-| ./test/perps/mock/MockBackstopLiquidationSettlement.sol |
-| ./test/perps/mock/MockPerpManager.sol |
-| ./test/perps/mock/MockPriceHistory.sol |
-| ./test/perps/mock/PerpAnvilFuzzMaker.sol |
-| ./test/perps/mock/PerpAnvilFuzzTrader.sol |
-| ./test/perps/mock/PerpFuzzTrader.t.sol |
-| ./test/perps/mock/TestUSDC.sol |
-| ./test/perps/unit/PerpBackstopLiquidationSettlement.t.sol |
-| ./test/perps/unit/PerpBankruptcyPrice.t.sol |
-| ./test/perps/unit/PerpManagerAccessControl.t.sol |
-| ./test/perps/unit/PerpPositionUpdate.t.sol |
-| ./test/perps/unit/PriceHistory.t.sol |
-| ./test/perps/unit/types/BackstopLiquidatorDataLib.t.sol |
-| ./test/router/RouterUnit.t.sol |
-| ./test/router/utils/RouterTestBase.t.sol |
-| ./test/utils/OperatorPanel.t.sol |
-| Totals: 134 |
+| [contracts/account-manager/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/account-manager) |
+| [contracts/clob/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/clob) |
+| [contracts/launchpad/interfaces/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/launchpad/interfaces)  |
+| [contracts/perps/interfaces/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/perps/interfaces) |
+| [contracts/router/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/router) |
+| [contracts/utils/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/contracts/utils) |
+| [script/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/script) |
+| [test/\*\*.\*\*](https://github.com/code-423n4/2025-08-gte-perps/tree/main/test) |
+
+*For a machine-readable version, please consult the [out_of_scope.txt](https://github.com/code-423n4/2025-08-gte-perps/blob/main/out_of_scope.txt) file*
 
 
 # Additional context
 
 ## Areas of concern (where to focus for bugs)
-- Economical attacks (e.g. engaging large amounts of tokens to break the platform or profit from it) are considered a valid attack vector; we encourage Wardens to look out for ways to generate "bad debt", e.g. negative equity, in a way that would result in net-positive gains for the attacker, or make the platform illiquid. ADL (Auto-De-Leverage) abuses that result in monetary gains for the attacker, are of particular interest to us.
 
-- The Orderbook should be able to process orders at all times; we invite the wardens to look for attacks that would result in a Denial Of Service (e.g. placing an order that cannot be cleared by the ClearingHouse), or that bypasses the limit of orders an User can place in one transaction.
+### Economical Vulnerabilities
 
-- Any attack that would result in loss of funds for other users, themselves or the Platform's funds, making it illiquid, are of particular interest to us.
+Economical attacks (e.g. engaging large amounts of tokens to break the platform or profit from it) are considered a valid attack vector; we encourage Wardens to look out for ways to generate "bad debt", e.g. negative equity, in a way that would result in net-positive gains for the attacker, or make the platform illiquid. ADL (Auto-De-Leverage) abuses that result in monetary gains for the attacker as well as any attack that would result in loss of funds for other users, themselves or the Platform's funds, making it illiquid, are of particular interest to us. To note, fund loss of oneself must result from an inadvertent action to be considered a valid vulnerability and must not arise from deliberate misuse of the platform.
 
-✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+### Orderbook Denial-of-Service
+
+The Orderbook should be able to process orders at all times; we invite the wardens to look for attacks that would result in a Denial Of Service (e.g. placing an order that cannot be cleared by the ClearingHouse), or that bypasses the limit of orders a user can place in one transaction.
 
 ## Main invariants
 
 We define the PerpManager's USDC balance as:
-```
-sum(all_users_free_collateral_balances[]) + sum(all_users_margin_balances[]) + insurance_Fund_Balance()
-```
 
-This should always be equal to the PerpManager's USDC Token balance.
+$$
+\sum^{total\_users}_{i=0}{user\_free\_collateral\_balance[i]} + \sum^{total\_users}_{i=0}{user\_margin\_balance[i]} + insurance\_fund\_balance
+$$
 
-✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+
+This should always be equal to or less than the PerpManager's USDC Token balance.
 
 ## All trusted roles in the protocol
 
-- `ADMIN_ROLE`, `LIQUIDATOR_ROLE` and `KEEPER_ROLE`  (in use mainly in the AdminPanel contract) is considered trusted.
-- Users that give another user an `OPERATOR` role of any kind, consider that user trusted, too.
+All administrative roles issued within the system are considered trusted and behaving within acceptable bounds.
 
-✅ SCOUTS: Please format the response above 👆 using the template below👇
+A user that has been assigned as the operator of another is considered trusted.
 
 | Role                                | Description                       |
 | --------------------------------------- | ---------------------------- |
-| Owner                          | Has superpowers                |
-| Administrator                             | Can change fees                       |
-
-✅ SCOUTS: Please format the response above 👆 so its not a wall of text and its readable.
+| `ADMIN_ROLE`                          | Can simulate any other role and has total rights over the system               |
+| `LIQUIDATOR_ROLE`                             | Can liquidate, deleverage, and delist close through the `LiquidatorPanel`                      |
+| `BACKSTOP_LIQUIDATOR_ROLE` | Can issue a backstop liquidation through the `LiquidatorPanel` |
 
 ## Running tests
 
-pre-requisite: the latest version of `foundry` is required to run this project.
-https://getfoundry.sh/introduction/installation
+The codebase utilizes the `forge` framework for compiling its contracts and executing tests coded in `Solidity`.
 
-Once that is done,
+### Prerequisites
 
-```
-$ git clone git@github.com:[Code4rena-repository].git
+- `forge` (`1.2.3-stable` tested)
 
-$ cd gte-contracts
+### Setup
 
-$ forge install
+Once the above prerequisite has been successfully installed, the following commands can be executed to setup the repository:
 
-$ forge build
-```
-
-✅ SCOUTS: Please format the response above 👆 using the template below👇
-
-```bash
-git clone https://github.com/code-423n4/2023-08-arbitrum
-git submodule update --init --recursive
-cd governance
-foundryup
-make install
-make build
-make sc-election-test
-```
-To run code coverage
-```bash
-make coverage
+```bash!
+git clone https://github.com/code-423n4/2025-08-gte-perps
+cd 2025-08-gte-perps
 ```
 
-✅ SCOUTS: Add a screenshot of your terminal showing the test coverage
+### Tests
+
+To run tests, the `forge test` command should be executed:
+
+```bash! 
+forge test
+```
+
+### Coverage
+
+Coverage can be executed via the built-in `coverage` command of `forge` (IR minimum is required):
+
+```bash! 
+FOUNDRY_PROFILE=coverage forge coverage --ir-minimum --report lcov
+```
+
+| File | Coverage (Line / Function / Branch) |
+| ---- | -------- |
+| [contracts/perps/GTL.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/GTL.sol) | 93.6% / 97% / 60% | 
+| [contracts/perps/PerpManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/PerpManager.sol) |  92.2% / 89.5% / 75% | 
+| [contracts/perps/modules/AdminPanel.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/AdminPanel.sol) |  86.2% / 90% / 32.7% | 
+| [contracts/perps/modules/LiquidatorPanel.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/LiquidatorPanel.sol) | 97% / 94.1% / 85.7% | 
+| [contracts/perps/modules/ViewPort.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/modules/ViewPort.sol) | 74.1% / 74.6% / 100% | 
+| [contracts/perps/types/BackstopLiquidatorDataLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/BackstopLiquidatorDataLib.sol) | 43.9% / 100% / 50% |
+| [contracts/perps/types/Book.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Book.sol) | 82% / 78.4% / 70% |
+| [contracts/perps/types/CLOBLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/CLOBLib.sol) | 86.9% / 95.5% / 68.7% | 
+| [contracts/perps/types/ClearingHouse.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/ClearingHouse.sol) | 96.2% / 94.1% / 87.1% | 
+| [contracts/perps/types/CollateralManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/CollateralManager.sol) | 100% / 100% / 100% | 
+| [contracts/perps/types/FeeManager.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/FeeManager.sol) | 83.3% / 80% / 100% | 
+| [contracts/perps/types/FundingRateEngine.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/FundingRateEngine.sol) | 100% / 100% / 25% | 
+| [contracts/perps/types/InsuranceFund.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/InsuranceFund.sol) | 88.9% / 80% / 0% |
+| [contracts/perps/types/Market.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Market.sol) | 94.2% / 96.1% / 91.4% | 
+| [contracts/perps/types/Order.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Order.sol) | 93.9% / 88.9% / 50% |
+| [contracts/perps/types/PackedFeeRatesLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/PackedFeeRatesLib.sol) | 100% / 100% / 0% |
+| [contracts/perps/types/Position.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/Position.sol) | 100% / 100% / 100% | 
+| [contracts/perps/types/PriceHistory.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/PriceHistory.sol) | 58.5% / 60% / 50% |
+| [contracts/perps/types/StorageLib.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/perps/types/StorageLib.sol) | 58.8% / 87.5% / 100% |
+| [contracts/launchpad/BondingCurves/SimpleBondingCurve.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/BondingCurves/SimpleBondingCurve.sol) | 85.7% / 81.8% / 50% | 
+| [contracts/launchpad/Distributor.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/Distributor.sol) | 83.6% / 82.4% / 58.3% | 
+| [contracts/launchpad/LaunchToken.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/LaunchToken.sol) | 85.7% / 75% / 40% | 
+| [contracts/launchpad/Launchpad.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/Launchpad.sol) | 80.3% / 67.7% / 31.8% | 
+| [contracts/launchpad/LaunchpadLPVault.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/LaunchpadLPVault.sol) |14.3% / 33.3% / 100% |
+| [contracts/launchpad/libraries/RewardsTracker.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/libraries/RewardsTracker.sol) | 98.8% / 100% / 100% |
+| [contracts/launchpad/uniswap/GTELaunchpadV2Pair.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/GTELaunchpadV2Pair.sol) | 87.5% / 100% / 61.1% | 
+| [contracts/launchpad/uniswap/GTELaunchpadV2PairFactory.sol](https://github.com/code-423n4/2025-08-gte-perps/blob/main/contracts/launchpad/uniswap/GTELaunchpadV2PairFactory.sol) | 82.1% / 80% / 80% |
+| **Totals** | **83.24% / 86.14% / 65.43%** |
+
+## Creating a PoC
+
+The project is composed of two core systems; the perpetual CLOB system, and the Launchpad system. A dedicated PoC test suite will be provided within 24-48 hours after the contest's initiation to set up a test environment for submissions to be demonstrated on.
+
+<!-- The project is composed of two core systems; the perpetual CLOB system, and the Launchpad system. Within the codebase, we have introduced a `PoC.t.sol` test file under the `test/c4-poc` folder that sets up each system with mock implementations to allow PoCs to be constructed in a straightforward manner. 
+
+Specifically, we combined the logic of the `RouterTestBase.t.sol` and `CLOBTestBase.sol` files manually to combine the underlying deployments.
+
+Depending on where the vulnerability lies, the PoC should utilize the relevant storage entries (i.e. the `router` in case a router vulnerability is demonstrated etc.).
+
+For a submission to be considered valid, the test case **should execute successfully** via the following command:
+
+```bash 
+forge test --match-test submissionValidity
+```
+
+PoCs meant to demonstrate a reverting transaction **must utilize the special `expect` utility functions `forge` exposes**. Failure to do so may result in an invalidation of the submission. -->
 
 ## Miscellaneous
 
