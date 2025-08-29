@@ -79,7 +79,7 @@ GTE leverages its high-performance infrastructure to offer Central Limit Order B
 
 - **Previous audits:**  
   - Launchpad: https://github.com/Zellic/publications/blob/master/GTE%20Launchpad-%20Zellic%20Audit%20Report.pdf
-  - CLOB Perps: https://github.com/Zellic/publications/blob/master/GTE%20Launchpad-%20Zellic%20Audit%20Report.pdf
+  - CLOB Perps: https://github.com/Zellic/publications/blob/master/GTE%20Perps%20-%20Zellic%20Audit%20Report.pdf
 - **Documentation:** https://docs.gte.xyz/home/, https://hackmd.io/@prltZHT9SO6hggMkOStsyw/BknIWmAYle
 - **Website:** https://www.gte.xyz
 - **X/Twitter:** https://x.com/GTE_XYZ
