@@ -13,6 +13,3 @@
 [submodule "lib/permit2"]
 	path = lib/permit2
 	url = https://github.com/Uniswap/permit2
-[submodule "lib/gte-univ2"]
-	path = lib/gte-univ2
-	url = https://github.com/liquid-labs-inc/gte-univ2
