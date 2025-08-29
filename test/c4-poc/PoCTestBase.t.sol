@@ -1,179 +1,122 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import {GTERouter} from "contracts/router/GTERouter.sol";
+import {PerpManagerTestBase} from "../perps/PerpManagerTestBase.sol";
+import {Distributor} from "contracts/launchpad/Distributor.sol";
+import {Launchpad} from "contracts/launchpad/Launchpad.sol";
+import {ILaunchpad} from "contracts/launchpad/interfaces/ILaunchpad.sol";
+import {SimpleBondingCurve} from "contracts/launchpad/BondingCurves/SimpleBondingCurve.sol";
+import {IBondingCurveMinimal} from "contracts/launchpad/BondingCurves/IBondingCurveMinimal.sol";
+import {LaunchToken} from "contracts/launchpad/LaunchToken.sol";
+import {LaunchpadLPVault} from "contracts/launchpad/LaunchpadLPVault.sol";
+import {IDistributor} from "contracts/launchpad/interfaces/IDistributor.sol";
 
-import {WETH} from "solady/tokens/WETH.sol";
+import {ERC1967Factory} from "@solady/utils/ERC1967Factory.sol";
 
-import {CLOBTestBase} from "test/clob/utils/CLOBTestBase.sol";
-import {ERC20Harness} from "test/harnesses/ERC20Harness.sol";
-import {MockUniV2Router} from "test/mocks/MockUniV2Router.sol";
-import {MockLaunchpad} from "test/mocks/MockLaunchpad.sol";
+import {ERC20Harness} from "../harnesses/ERC20Harness.sol";
 
-import {ICLOBManager, SettingsParams} from "contracts/clob/ICLOBManager.sol";
-import {IAllowanceTransfer} from "@permit2/interfaces/IAllowanceTransfer.sol";
+import {MockUniV2Router} from "../mocks/MockUniV2Router.sol";
 
-import {DeployPermit2} from "../../lib/permit2/test/utils/DeployPermit2.sol";
+import {FixedPointMathLib} from "@solady/utils/FixedPointMathLib.sol";
+import {ICLOBManager} from "contracts/clob/ICLOBManager.sol";
+import {IOperatorPanel} from "contracts/utils/interfaces/IOperatorPanel.sol";
 
-contract WETHHarness is WETH {
-    function mint(address to, uint256 amount) external {
-        _mint(to, amount);
-    }
-}
+import {UniV2Bytecode} from "../launchpad/integration/UniV2Bytecode.t.sol";
 
-// Combines CLOBTestBase & RouterTestBase
-contract PoCTestBase is CLOBTestBase, DeployPermit2 {
-    ERC20Harness internal weth;
-    ERC20Harness internal USDC;
-    ERC20Harness internal tokenA;
-    ERC20Harness internal tokenB;
-    ERC20Harness internal tokenC;
-    ERC20Harness internal tokenD;
+import "forge-std/Test.sol";
 
-    uint256 public constant TAKER_FEE_RATE = 200;
 
-    MockUniV2Router internal uniV2Router;
-    MockLaunchpad internal launchpad;
-    address dummyGteRouter = makeAddr("dummy router");
-    address dummyDistributor = makeAddr("dummy distributor");
+// Implements the LaunchpadTest setup
+contract PoCTestBase is PerpManagerTestBase {
+    using FixedPointMathLib for uint256;
+    Launchpad launchpad;
+    address distributor;
+    IBondingCurveMinimal curve;
+    LaunchpadLPVault launchpadLPVault;
 
-    address internal wethCLOB;
-    address internal wethQuoteCLOB;
-    address internal abCLOB;
-    address internal acCLOB;
-    address internal bcCLOB;
-    address internal dcCLOB;
-    address internal dbCLOB;
+    ERC20Harness quoteToken;
+    MockUniV2Router uniV2Router;
 
-    GTERouter internal router;
-    IAllowanceTransfer internal permit2;
+    address owner = makeAddr("owner");
+    address user = makeAddr("user");
+    address dev = makeAddr("dev");
 
-    address internal deployer;
-    address internal jb;
-    address internal rite;
-    address internal julien;
-    uint256 internal jbKey;
-    uint256 internal riteKey;
-    uint256 internal julienKey;
-    address internal v2Factory;
+    uint256 constant MIN_BASE_AMOUNT = 100_000_000;
 
-    bytes32 internal constant _PERMIT_SINGLE_TYPEHASH = keccak256(
-        "PermitSingle(PermitDetails details,address spender,uint256 sigDeadline)PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)"
-    );
+    address token;
 
-    bytes32 internal constant _PERMIT_DETAILS_TYPEHASH =
-        keccak256("PermitDetails(address token,uint160 amount,uint48 expiration,uint48 nonce)");
+    uint256 BONDING_SUPPLY;
+    uint256 TOTAL_SUPPLY;
 
-    function setUp() public virtual override {
-        CLOBTestBase.setUp();
+    function setUp() public override {
+        super.setUp();
 
-        (jb, jbKey) = makeAddrAndKey("jb");
-        (rite, riteKey) = makeAddrAndKey("rite");
-        (julien, julienKey) = makeAddrAndKey("julien");
-        v2Factory = makeAddr("mock univ2 factory address");
-        deployer = makeAddr("deployer");
+        quoteToken = new ERC20Harness("Quote", "QTE");
 
-        USDC = new ERC20Harness("MOCK USDC", "USDC");
+        address uniV2Factory = makeAddr("factory");
+        vm.etch(uniV2Factory, UniV2Bytecode.UNIV2_FACTORY);
 
-        bytes32 routerSalt = bytes32(abi.encode("GTE.V1.TESTNET.ROUTER.SALT", deployer));
+        uniV2Router = new MockUniV2Router(makeAddr("factory"));
 
-        weth = ERC20Harness(address(new WETHHarness()));
+        bytes32 launchpadSalt = bytes32(abi.encode("GTE.V1.TESTNET.LAUNCHPAD", owner));
 
-        _deployUniContracts();
-        _deployLaunchpad(routerSalt);
-        _deployRouter(routerSalt);
+        launchpad = Launchpad(factory.predictDeterministicAddress(launchpadSalt));
 
-        tokenA = new ERC20Harness("Token A", "TA");
-        tokenB = new ERC20Harness("Token B", "TB");
-        tokenC = new ERC20Harness("Token C", "TC");
-        tokenD = new ERC20Harness("Token D", "TD");
+        address c_logic = address(new SimpleBondingCurve(address(launchpad)));
+        address v_logic = address(new LaunchpadLPVault());
 
-        vm.label(address(weth), "WETH");
-        vm.label(address(tokenA), "Token A");
-        vm.label(address(tokenB), "Token B");
-        vm.label(address(tokenC), "Token C");
-        vm.label(address(tokenD), "Token D");
+        curve = SimpleBondingCurve(factory.deploy(address(c_logic), owner));
+        launchpadLPVault = LaunchpadLPVault(factory.deploy(address(v_logic), owner));
 
-        vm.label(address(router), "Router");
-
-        wethCLOB = _deployClob(address(tokenA), address(weth));
-        wethQuoteCLOB = _deployClob(address(weth), address(tokenB));
-        abCLOB = _deployClob(address(tokenA), address(tokenB));
-        bcCLOB = _deployClob(address(tokenB), address(tokenC));
-        acCLOB = _deployClob(address(tokenA), address(tokenC));
-        dcCLOB = _deployClob(address(tokenD), address(tokenC));
-        dbCLOB = _deployClob(address(tokenD), address(tokenB));
-    }
-
-    function _deployUniContracts() internal {
-        uniV2Router = new MockUniV2Router(v2Factory);
-        permit2 = IAllowanceTransfer(deployPermit2());
-
-        // Mock the factory createPair call to return a mock pair address
+        address clobManager = makeAddr("clob manager");
+        address operatorAddr = makeAddr("operator");
         vm.mockCall(
-            v2Factory, abi.encodeWithSignature("createPair(address,address)"), abi.encode(makeAddr("mock pair"))
+            operatorAddr,
+            abi.encodeWithSelector(IOperatorPanel.getOperatorRoleApprovals.selector, user, address(0)),
+            abi.encode(0)
         );
 
-        // Mock the pair skim call to do nothing
-        address mockPair = makeAddr("mock pair");
-        vm.mockCall(mockPair, abi.encodeWithSignature("skim(address)"), abi.encode());
-    }
+        distributor = address(new Distributor());
+        Distributor(distributor).initialize(address(launchpad));
 
-    function _deployLaunchpad(bytes32 routerSalt) internal {
-        address router_address = factory.predictDeterministicAddress(routerSalt);
+        address l_logic =
+            address(new Launchpad(address(uniV2Router), address(0), clobManager, operatorAddr, distributor));
 
-        // Deploy mock launchpad
-        launchpad = new MockLaunchpad(dummyDistributor);
-
-        vm.startPrank(deployer);
-        launchpad.initialize(
-            deployer,
-            address(USDC),
-            address(0), // mock bonding curve
-            address(0), // mock lp vault
-            ""
+        vm.prank(owner);
+        Launchpad(
+            factory.deployDeterministicAndCall({
+                implementation: l_logic,
+                admin: owner,
+                salt: launchpadSalt,
+                data: abi.encodeCall(
+                    Launchpad.initialize,
+                    (
+                        owner,
+                        address(quoteToken),
+                        address(curve),
+                        address(launchpadLPVault),
+                        abi.encode(200_000_000 ether, 10 ether)
+                    )
+                )
+            })
         );
 
-        launchpad.updateQuoteAsset(address(USDC));
+        token = _launchToken();
+
+        BONDING_SUPPLY = curve.bondingSupply(token);
+        TOTAL_SUPPLY = curve.totalSupply(token);
+
+        vm.startPrank(user);
+        quoteToken.approve(address(launchpad), type(uint256).max);
+        ERC20Harness(token).approve(address(launchpad), type(uint256).max);
         vm.stopPrank();
-
-        // Set up mocks for distributor
-        vm.mockCall(
-            address(dummyDistributor), abi.encodeWithSignature("createRewardsPair(address,address)"), abi.encode(true)
-        );
     }
 
-    function _deployRouter(bytes32 routerSalt) internal {
-        assertTrue(address(weth) > address(0), "Weth not initialized!");
+    function _launchToken() internal returns (address) {
+        uint256 fee = launchpad.launchFee();
+        deal(dev, 30 ether);
 
-        address router_logic = address(
-            new GTERouter(
-                payable(address(weth)),
-                address(launchpad),
-                address(accountManager),
-                address(clobManager),
-                address(uniV2Router),
-                address(permit2)
-            )
-        );
-
-        vm.prank(deployer);
-        router = GTERouter(
-            payable(factory.deployDeterministic({implementation: router_logic, admin: deployer, salt: routerSalt}))
-        );
-    }
-
-    function _deployClob(address quoteToken, address baseToken) internal returns (address clobAddress) {
-        // Max limits defaults to 1 if passed as 0
-        SettingsParams memory settings = SettingsParams({
-            owner: address(this),
-            maxLimitsPerTx: 20,
-            minLimitOrderAmountInBase: 0.005 ether,
-            tickSize: 0.0001 ether,
-            lotSizeInBase: 0.005 ether
-        });
-
-        // Create the market using the factory
-        clobAddress = clobManager.createMarket(baseToken, quoteToken, settings);
+        vm.prank(dev);
+        return launchpad.launch{value: fee}("TestToken", "TST", "https://testtoken.com");
     }
 }
