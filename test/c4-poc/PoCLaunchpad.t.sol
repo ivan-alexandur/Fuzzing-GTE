@@ -3,7 +3,7 @@ pragma solidity ^0.8.0;
 
 import {LaunchpadTestBase} from "./LaunchpadTestBase.sol";
 
-contract PoC is LaunchpadTestBase {
+contract PoCLaunchpad is LaunchpadTestBase {
     /**
      * PoC can utilize the following variables to access the relevant contracts:
      * - factory: ERC1967Factory.sol 
