@@ -249,11 +249,9 @@ FOUNDRY_PROFILE=coverage forge coverage --ir-minimum --report lcov
 
 ## Creating a PoC
 
-The project is composed of two core systems; the perpetual CLOB system, and the Launchpad system. Within the codebase, we have introduced a `PoC.t.sol` test file under the `test/c4-poc` folder that sets up each system with mock implementations to allow PoCs to be constructed in a straightforward manner. 
+The project is composed of two core systems; the perpetual CLOB system, and the Launchpad system. Within the codebase, we have introduced two test files (`PoCPerps.t.sol` & `PoCLaunchpad.t.sol`) under the `test/c4-poc` folder that sets up each system with mock implementations to allow PoCs to be constructed in a straightforward manner. 
 
-Specifically, we combined the logic of the `PerpManagerTestBase.sol` and `Launchpad.t.sol` files manually to combine the underlying deployments.
-
-Depending on where the vulnerability lies, the PoC should utilize the relevant storage entries (i.e. the `launchpad` in case a launchpad vulnerability is demonstrated etc.).
+Depending on where the vulnerability lies, Wardens should utilize the correct PoC file alongside the relevant storage entries (i.e. the `launchpad` in case a launchpad vulnerability is demonstrated etc.).
 
 For a submission to be considered valid, the test case **should execute successfully** via the following command:
 
