@@ -5,3 +5,6 @@
 forge-std=lib/forge-std/src/
 @gte-univ2-core=lib/gte-univ2/src/core/
 @gte-univ2-periphery=lib/gte-univ2/src/periphery/
+@recon/=lib/setup-helpers/src/
+@chimera/=lib/chimera/src/
+@recon/=lib/setup-helpers/src/

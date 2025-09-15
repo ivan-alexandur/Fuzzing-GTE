@@ -66,3 +66,8 @@ nosetests.xml
 coverage.xml
 *.cover
 .hypothesis/
+
+# Coverage files
+crytic-export
+echidna
+medusa
