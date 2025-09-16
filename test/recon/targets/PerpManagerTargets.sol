@@ -1,131 +1,25 @@
 // SPDX-License-Identifier: GPL-2.0
 pragma solidity ^0.8.0;
 
+import {BaseTargetFunctions} from "@chimera/BaseTargetFunctions.sol";
+import {BeforeAfter} from "../BeforeAfter.sol";
+import {Properties} from "../Properties.sol";
 // Chimera deps
 import {vm} from "@chimera/Hevm.sol";
 
 // Helpers
 import {Panic} from "@recon/Panic.sol";
 
-// Targets
-// NOTE: Always import and apply them in alphabetical order, so much easier to debug!
-import { AdminTargets } from "./targets/AdminTargets.sol";
-import { DoomsdayTargets } from "./targets/DoomsdayTargets.sol";
-import { ManagersTargets } from "./targets/ManagersTargets.sol";
+import "contracts/perps/PerpManager.sol";
 
-abstract contract TargetFunctions is
-    AdminTargets,
-    DoomsdayTargets,
-    ManagersTargets
+abstract contract PerpManagerTargets is
+    BaseTargetFunctions,
+    Properties
 {
     /// CUSTOM TARGET FUNCTIONS - Add your own target functions here ///
 
 
     /// AUTO GENERATED TARGET FUNCTIONS - WARNING: DO NOT DELETE OR MODIFY THIS LINE ///
-
-    function clob_acceptOwnership() public asActor {
-        clob.acceptOwnership();
-    }
-
-    function clob_adminCancelExpiredOrders(uint256[] memory ids, Side side) public asActor {
-        clob.adminCancelExpiredOrders(ids, side);
-    }
-
-    function clob_amend(address account, ICLOB.AmendArgs memory args) public asActor {
-        clob.amend(account, args);
-    }
-
-    function clob_cancel(address account, ICLOB.CancelArgs memory args) public asActor {
-        clob.cancel(account, args);
-    }
-
-    function clob_initialize(MarketConfig memory marketConfig, MarketSettings memory marketSettings, address initialOwner) public asActor {
-        clob.initialize(marketConfig, marketSettings, initialOwner);
-    }
-
-    function clob_placeOrder(address account, ICLOB.PlaceOrderArgs memory args) public asActor {
-        clob.placeOrder(account, args);
-    }
-
-    function clob_renounceOwnership() public asActor {
-        clob.renounceOwnership();
-    }
-
-    function clob_setLotSizeInBase(uint256 newLotSizeInBase) public asActor {
-        clob.setLotSizeInBase(newLotSizeInBase);
-    }
-
-    function clob_setMaxLimitsPerTx(uint8 newMaxLimits) public asActor {
-        clob.setMaxLimitsPerTx(newMaxLimits);
-    }
-
-    function clob_setMinLimitOrderAmountInBase(uint256 newMinLimitOrderAmountInBase) public asActor {
-        clob.setMinLimitOrderAmountInBase(newMinLimitOrderAmountInBase);
-    }
-
-    function clob_setTickSize(uint256 tickSize) public asActor {
-        clob.setTickSize(tickSize);
-    }
-
-    function clob_transferOwnership(address newOwner) public asActor {
-        clob.transferOwnership(newOwner);
-    }
-
-    function liquidatorPanel_backstopLiquidate(bytes32 asset, address account, uint256 subaccount) public asActor {
-        liquidatorPanel.backstopLiquidate(asset, account, subaccount);
-    }
-
-    function liquidatorPanel_cancelOwnershipHandover() public payable asActor {
-        liquidatorPanel.cancelOwnershipHandover{value: msg.value}();
-    }
-
-    function liquidatorPanel_completeOwnershipHandover(address pendingOwner) public payable asActor {
-        liquidatorPanel.completeOwnershipHandover{value: msg.value}(pendingOwner);
-    }
-
-    function liquidatorPanel_deleverage(bytes32 asset, DeleveragePair[] memory pairs) public asActor {
-        liquidatorPanel.deleverage(asset, pairs);
-    }
-
-    function liquidatorPanel_delistClose(bytes32 asset, Account[] memory accounts) public asActor {
-        liquidatorPanel.delistClose(asset, accounts);
-    }
-
-    function liquidatorPanel_grantRoles(address user, uint256 roles) public payable asActor {
-        liquidatorPanel.grantRoles{value: msg.value}(user, roles);
-    }
-
-    function liquidatorPanel_liquidate(bytes32 asset, address account, uint256 subaccount) public asActor {
-        liquidatorPanel.liquidate(asset, account, subaccount);
-    }
-
-    function liquidatorPanel_renounceOwnership() public payable asActor {
-        liquidatorPanel.renounceOwnership{value: msg.value}();
-    }
-
-    function liquidatorPanel_renounceRoles(uint256 roles) public payable asActor {
-        liquidatorPanel.renounceRoles{value: msg.value}(roles);
-    }
-
-    function liquidatorPanel_requestOwnershipHandover() public payable asActor {
-        liquidatorPanel.requestOwnershipHandover{value: msg.value}();
-    }
-
-    function liquidatorPanel_revokeRoles(address user, uint256 roles) public payable asActor {
-        liquidatorPanel.revokeRoles{value: msg.value}(user, roles);
-    }
-
-    function liquidatorPanel_transferOwnership(address newOwner) public payable asActor {
-        liquidatorPanel.transferOwnership{value: msg.value}(newOwner);
-    }
-
-    function operatorPanel_approveOperator(address account, address operator, uint256 roles) public asActor {
-        operatorPanel.approveOperator(account, operator, roles);
-    }
-
-    function operatorPanel_disapproveOperator(address account, address operator, uint256 roles) public asActor {
-        operatorPanel.disapproveOperator(account, operator, roles);
-    }
 
     function perpManager_activateMarket(bytes32 asset) public asActor {
         perpManager.activateMarket(asset);
